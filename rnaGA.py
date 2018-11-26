@@ -180,7 +180,3 @@ if __name__ == "__main__":
         resultado = csv.writer(csvfile, delimiter=',')
         for row in resultadosGeneracion:
             resultado.writerows(row['resultados'])
-
-    with open('resumen.txt', 'w') as f:
-        for row in resultadosGeneracion:
-            f.write("%s\n" % row['resultados'])
