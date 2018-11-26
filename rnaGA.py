@@ -1,6 +1,5 @@
 from subprocess import Popen, PIPE
 from random import randint
-import matplotlib.pyplot as plt
 import csv
 import numpy as np
 
@@ -114,24 +113,52 @@ def mutacionOperator(poblacionConCrossOperator):
 
     return poblacionConCrossOperator
 
+def fitnessWeka(parametros):
+    learningRate = float(parametros[3]) / 100
+    momentum = float(parametros[4]) / 100
+
+    multilayerPerceptron = "java -cp weka.jar weka.classifiers.functions.MultilayerPerceptron -L {0} -M {1} -N {2} -V 0 -S 0 -E 20 -H {3} -t incendios.arff".format(learningRate, momentum, parametros[2], parametros[1]).split(" ")
+    proceso = Popen(multilayerPerceptron, stdout= PIPE)
+    resultado = proceso.stdout.read().decode("utf-8")
+    entrenamientoWeka = [ item for item in resultado.split("\n") if "Correctly Classified Instances" in item ][1].split()
+    return entrenamientoWeka[-2]
+
+
 def crearDescendencia():
     binarios = convertirABinario()
     #Aqui seleccionamos las parejas de padres
     padresP1P2 = [ binarios[i:i+2] for i in range(0, 10, 2) ]
-    for row in padresP1P2:
-        print(row[0])
-        print(row[1])
-        print("Termina pareja de padres")
 
     nuevosHijos1 = [ funcionCruce(row[0], row[1]) for row in padresP1P2 ]
     nuevosHijos2 = [ funcionCruce(row[1], row[0]) for row in padresP1P2 ]
 
-    print("Descendencia")
     descendencia = nuevosHijos1 + nuevosHijos2
-    print(descendencia)
     descendenciaConMutacion = mutacionOperator(descendencia)
-    print(descendenciaConMutacion)
+
+    salidas = []
+
+    for elemento in descendenciaConMutacion:
+        capas = int(elemento[0], 2)
+        neuronas = int(elemento[1], 2)
+        epocas = int(elemento[2], 2)
+        learningRate = int(elemento[3], 2)
+        momentum = int(elemento[4], 2)
+
+        if neuronas == 0:
+            neuronas = 3
+        if learningRate == 0:
+            learningRate = 1
+        if momentum == 0:
+            momentum = 1
+
+        print([capas, neuronas, epocas, learningRate, momentum])
+        entrenamientoResultado = fitnessWeka([capas, neuronas, epocas, learningRate, momentum])
+        salidas.append([capas, neuronas, epocas, learningRate, momentum, entrenamientoResultado])
+
+    return salidas
 
 
 if __name__ == "__main__":
+    totalGeneraciones = 10
+    resultadosGeneracion = []
     crearDescendencia()
