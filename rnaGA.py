@@ -74,6 +74,45 @@ def cruceOperator(m1, m2):
     hijo = "".join([ str(mitadM1) + str(mitadM2) ])
     return hijo
 
+def mutacionOperator(poblacionConCrossOperator):
+    elementoToMutar = randint(0,9)
+    indiceToMutarEnNeuronas = randint(0,4)
+    indiceToMutarEnEpocas = randint(0,9)
+    #Aqui hacemos un aleatorio entre 1 y 2 para seleccionar el indice de neuronas o el indice de epocas
+    aleatorioToSelect = randint(1,2)
+    if aleatorioToSelect == 1:
+        #Aqui se selecciona el indice de neuronas para mutar
+        elemento = poblacionConCrossOperator[elementoToMutar]
+        mutacion = elemento[1]
+        valorToMutar = mutacion[indiceToMutarEnNeuronas]
+        aux = list(mutacion)
+
+        if valorToMutar == '1':
+            aux[indiceToMutarEnNeuronas] = '0'
+        else:
+            aux[indiceToMutarEnNeuronas] = '1'
+
+        mutacion = "".join(aux)
+        elemento[1] = mutacion
+        poblacionConCrossOperator[elementoToMutar] = elemento
+    else:
+        #Aqui se selecciona el indice de epocas para mutar
+        elemento = poblacionConCrossOperator[elementoToMutar]
+        mutacion = elemento[2]
+        valorToMutar = mutacion[indiceToMutarEnEpocas]
+
+        aux = list(mutacion)
+
+        if valorToMutar == '1':
+            aux[indiceToMutarEnEpocas] = '0'
+        else:
+            aux[indiceToMutarEnEpocas] = '1'
+
+        mutacion = "".join(aux)
+        elemento[2] = mutacion
+        poblacionConCrossOperator[elementoToMutar] = elemento
+
+    return poblacionConCrossOperator
 
 def crearDescendencia():
     binarios = convertirABinario()
@@ -84,9 +123,15 @@ def crearDescendencia():
         print(row[1])
         print("Termina pareja de padres")
 
-    nuevosHijos = [ funcionCruce(row[0], row[1]) for row in padresP1P2 ]
-    print("Nuevos hijos")
-    print(nuevosHijos)
+    nuevosHijos1 = [ funcionCruce(row[0], row[1]) for row in padresP1P2 ]
+    nuevosHijos2 = [ funcionCruce(row[1], row[0]) for row in padresP1P2 ]
+
+    print("Descendencia")
+    descendencia = nuevosHijos1 + nuevosHijos2
+    print(descendencia)
+    descendenciaConMutacion = mutacionOperator(descendencia)
+    print(descendenciaConMutacion)
+
 
 if __name__ == "__main__":
     crearDescendencia()
