@@ -3,6 +3,8 @@ from random import randint
 import csv
 import numpy as np
 
+savePoblacion = []
+
 def mapeo():
     inicio = np.array([1, 2, 3, 4, 5])
     for i in inicio:
@@ -21,8 +23,6 @@ def mapeo():
 
 
 def poblacionInicial():
-    print("Generando la primera poblacion:")
-    myarreglo = mapeo()
     pobInicial = np.array([[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4,5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5],[1, 2, 3, 4, 5]])
     for i in range(1, 11):
         if i == 1:
@@ -113,19 +113,25 @@ def mutacionOperator(poblacionConCrossOperator):
 
     return poblacionConCrossOperator
 
-def fitnessWeka(parametros):
-    learningRate = float(parametros[3]) / 100
-    momentum = float(parametros[4]) / 100
+def fitnessWeka(capas, neuronas, epocas, learRate, mom):
+    learningRate = float(learRate) / 100
+    momentum = float(mom) / 100
 
-    multilayerPerceptron = "java -cp weka.jar weka.classifiers.functions.MultilayerPerceptron -L {0} -M {1} -N {2} -V 0 -S 0 -E 20 -H {3} -t incendios.arff".format(learningRate, momentum, parametros[2], parametros[1]).split(" ")
-    proceso = Popen(multilayerPerceptron, stdout= PIPE)
+    comando = "java -cp weka.jar weka.classifiers.functions.MultilayerPerceptron -L {0} -M {1} -N {2} -V 0 -S 0 -E 20 -H {3} -t incendios.arff".format(learningRate, momentum, epocas, neuronas).split(" ")
+    proceso = Popen(comando, stdout= PIPE)
     resultado = proceso.stdout.read().decode("utf-8")
     entrenamientoWeka = [ item for item in resultado.split("\n") if "Correctly Classified Instances" in item ][1].split()
     return entrenamientoWeka[-2]
 
 
-def crearDescendencia():
-    binarios = convertirABinario()
+def crearDescendencia(index):
+    if index == 0:
+        binarios = convertirABinario()
+    else:
+        binarios = savePoblacion
+
+    print("Poblacion Inicial")
+    print(binarios)
     #Aqui seleccionamos las parejas de padres
     padresP1P2 = [ binarios[i:i+2] for i in range(0, 10, 2) ]
 
@@ -134,6 +140,12 @@ def crearDescendencia():
 
     descendencia = nuevosHijos1 + nuevosHijos2
     descendenciaConMutacion = mutacionOperator(descendencia)
+
+    print("Poblacion con cruce y muteada")
+    print(descendenciaConMutacion)
+
+    global savePoblacion
+    savePoblacion = descendenciaConMutacion
 
     salidas = []
 
@@ -152,13 +164,23 @@ def crearDescendencia():
             momentum = 1
 
         print([capas, neuronas, epocas, learningRate, momentum])
-        entrenamientoResultado = fitnessWeka([capas, neuronas, epocas, learningRate, momentum])
+        entrenamientoResultado = fitnessWeka(capas, neuronas, epocas, learningRate, momentum)
         salidas.append([capas, neuronas, epocas, learningRate, momentum, entrenamientoResultado])
 
     return salidas
 
-
 if __name__ == "__main__":
-    totalGeneraciones = 10
+    totalGeneraciones = 1
     resultadosGeneracion = []
-    crearDescendencia()
+    for i in range(0, totalGeneraciones):
+        print("Generacion {0}".format(i+1))
+        resultadosGeneracion.append({'resultados': crearDescendencia(i)})
+
+    with open("salidas.csv", "a") as csvfile:
+        resultado = csv.writer(csvfile, delimiter=',')
+        for row in resultadosGeneracion:
+            resultado.writerows(row['resultados'])
+
+    with open('resumen.txt', 'w') as f:
+        for row in resultadosGeneracion:
+            f.write("%s\n" % row['resultados'])
